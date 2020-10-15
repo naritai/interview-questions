@@ -2,23 +2,17 @@
 
 class SimplePromise {
   constructor(executionFunction) {
-    this.state = null;
+    this.status = 'pending';
     this.result = null;
     this.error = null;
     this.errorHandlerSaved = false;
     this.handlers = [];
-    this.executionFunction = executionFunction;
 
-    this.run();
-  }
-
-  run = () => {
-    this.state = 'pending';
-    this.executionFunction(this.resolve, this.reject);
+    executionFunction(this.resolve, this.reject);
   }
 
   resolve = (result) => {
-    this.state = 'fulfilled';
+    this.status = 'fulfilled';
     this.result = result;
     this.handlers
       .filter(cb => cb.type === 'fulfilled' || cb.type === 'finally')
@@ -26,36 +20,47 @@ class SimplePromise {
   }
 
   reject = (error) => {
-    this.state = 'rejected';
+    this.status = 'rejected';
     this.error = error;
     this.handlers
       .filter(cb => cb.type === 'rejected' || cb.type === 'finally')
       .forEach(cb => cb.fn(this.error));
   }
 
-  then = (resolveHandler) => {    
-    if (this.state === 'fulfilled') {
-      console.log('Promise has already been fulfilled!')
-    } else if (this.state === 'pending') {
+  then = (resolveHandler, errorHandler) => {    
+    if (this.status === 'pending') {
       this.handlers.push({ type: 'fulfilled', fn: resolveHandler });
+      if (errorHandler) {
+        this.handlers.push({ type: 'rejected', fn: resolveHandler });
+      }
+    } else if (this.status === 'fulfilled') {
+      resolveHandler(this.result);
+    } else if (this.status === 'rejected') {
+      if (errorHandler) {
+        errorHandler(this.error);
+      }
     }
     return this;
   }
 
   catch = (errorHandler) => { 
     // there is only one error handler can run!
-    if (this.state === 'rejected') {
-      console.log('Promise has already been rejected');
-    } else if (this.state === 'pending' && !this.errorHandlerSaved) {
+    if (this.status === 'pending' && !this.errorHandlerSaved) {
       this.handlers.push({ type: 'rejected', fn: errorHandler });
       this.errorHandlerSaved = true;
-    }
+    } else if (this.status === 'rejected') {
+      errorHandler(this.error);
+    } else 
     return this;
   }
 
   finally = (fulfilledCallback) => {
     // finally callbacks run always: before and after .then and .catch plus, with order save behaviour.
-    this.handlers.push({ type: 'finally', fn: fulfilledCallback }); 
+    if (this.status === 'pending') {
+      this.handlers.push({ type: 'finally', fn: fulfilledCallback }); 
+    } else if (this.status === 'fulfilled') {
+      fulfilledCallback();
+    }
     return this;
   }
 }
