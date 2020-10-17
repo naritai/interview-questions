@@ -61,7 +61,8 @@ function isVertSym(list) {
     result = Object.values(horLinesSumLastTwo).every(num => num === sumBase)
     const isExtraPoint = extraMidPoints.filter(([x]) => x !== sumBase / 2).length;
 
-    return !!isExtraPoint || result;
+    if (isExtraPoint !== 0) return false;
+    return result;
 }
 
 isVertSym([[0, 0], [0, 0], [1, 1], [2, 2], [4, 0], [3, 1], [4, 0]]) 
