@@ -44,7 +44,7 @@ const throttleOriginal = (func, limit) => {
 }
 
 
-// 
+// CUSTOM
 function throttle(fn, timeout) {
 	let lastArgs, lastThis, timeId;
 
@@ -80,27 +80,56 @@ function throttle(fn, timeout) {
 }
 
 
+function throttleLearnJS(fn, timeout) {
+	let lastArgs, lastThis;
+	let isThrottled = false;
 
-// const f = throttle((arg) => console.log(arg), 300);
+	function wrapper (...args) {
+		if (isThrottled) {
+			lastArgs = args;
+			lastThis = this;
+			return;
+		}
+
+		fn.apply(lastThis, lastArgs);
+		isThrottled = true;
+
+		setTimeout(() => {
+			isThrottled = false;
+
+			// если были вызовы, то вызвать последний раз
+			if (lastArgs) {
+			  wrapper.apply(lastThis, lastArgs);
+				lastThis = lastArgs = null;
+			}
+		}, timeout);
+	}
+
+	return wrapper;
+}
 
 
-// f(1);
-// f(2); // ignored
-// setTimeout(() => f(3), 250); // ignored
-// setTimeout(() => f(4), 290); // invoked
-// setTimeout(() => f(5), 602); // invoked
-// setTimeout(() => f(6), 700); // ignored
-// setTimeout(() => f(7), 710); // invoked
-// setTimeout(() => f(8), 4000); // invoked
+
+const f = throttleLearnJS((arg) => console.log(arg), 300);
+
+
+f(1);
+f(2); // ignored
+setTimeout(() => f(3), 250); // ignored
+setTimeout(() => f(4), 290); // invoked
+setTimeout(() => f(5), 602); // invoked
+setTimeout(() => f(6), 700); // ignored
+setTimeout(() => f(7), 710); // invoked
+setTimeout(() => f(8), 4000); // invoked
 
 // output is:
 // 1, 4, 5, 7, 8
 
 
-const f = throttle((arg) => console.log(arg), 1000);
+// const f = throttleLearnJS((arg) => console.log(arg), 1000);
 
-f(1);
-f(2);
+// f(1);
+// f(2);
 
 
 
